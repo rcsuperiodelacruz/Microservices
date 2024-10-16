@@ -1,0 +1,5 @@
+version: 1
+goal_event_url:
+  url: http://localhost:8090/goal
+boost_event_url:
+  url: http://localhost:8090/boost

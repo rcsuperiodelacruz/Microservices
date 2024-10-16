@@ -1,0 +1,215 @@
+openapi: 3.0.0
+servers:
+  - url: /
+
+info:
+  description: This API is for players, coaches, and admins. It tracks two events in Rocket League goal events and boost pickup events. The purpose of this API is to analyze the relationship between goals and boost usage.
+  version: "1.0.0"
+  title: Rocket League Event API
+  contact:
+    email: carlodela2015@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: players
+    description: API calls available to players for monitoring and improving boost usage.
+  - name: coaches
+    description: API calls available to coaches for analyzing player performance.
+paths:
+  /goal:
+    post:
+      tags:
+        - players
+        - coaches
+      summary: records a goal event
+      operationId: app.recordGoalEvent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalEvent'
+      responses:
+        '201':
+          description: Goal Event Details created
+        '400':
+          description: bad input parameter
+
+  /boost:
+    post:
+      tags:
+        - players
+      summary: records a boost pickup event
+      operationId: app.recordBoostEvent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoostPickupEvent'
+      responses:
+        '201':
+          description: Goal Event Details created
+        '400':
+          description: "bad input parameter"
+
+  /get/boost:
+    get:
+      tags:
+      - fetch boost info
+      summary: fetch list of boost info with matching date range
+      description: "get list of boost info that was added during a specefic time frame"
+      operationId: app.fetch_boost_info
+      parameters:
+        - name: start_timestamp
+          in: query
+          description: Limits the number of boost info returned
+          schema:
+            type: string
+            format: date-time
+            example: 2023-12-29T12:31:10.001Z
+      
+        - name: end_timestamp
+          in: query
+          description: Limits the number of boost info returned
+          schema:
+            type: string
+            format: date-time
+            example: 2023-12-29T12:31:10.001Z
+
+      responses:
+        '200':
+          description: Successfully returned a list of boost info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoostPickupEvent'
+        '400':
+          description: Invalid request
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+
+
+  /get/goal:
+    get:
+      tags:
+      - fetch goal info
+      summary: fetch list of goal info with matching date range
+      description: "get list of goal info that was added during a specific time frame"
+      operationId: app.fetch_goal_info
+      parameters:
+        - name: start_timestamp
+          in: query
+          description: Limits the number of goal info returned
+          schema:
+            type: string
+            format: date-time
+            example: 2023-12-29T12:31:10.001Z
+      
+        - name: end_timestamp
+          in: query
+          description: Limits the number of goal info returned
+          schema:
+            type: string
+            format: date-time
+            example: 2023-12-29T12:31:10.001Z
+
+      responses:
+        '200':
+          description: Successfully returned a list of goal info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoalEvent'
+        '400':
+          description: Invalid request
+          content: 
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+
+
+components:
+  schemas:
+    GoalEvent:
+      type: object
+      required:
+        - playerId
+        - goalSpeed
+        - goalType
+        - goalDistance
+        - trace_id
+      properties:
+        playerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        trace_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"      
+        goalSpeed:
+          type: number
+          format: float
+          example: 85.5
+        goalType:
+          type: string
+          enum:
+            - aerial
+            - ground
+            - pinch
+          example: aerial
+        goalDistance:
+          type: number
+          format: float
+          example: 50.2
+
+    BoostPickupEvent:
+      type: object
+      required:
+        - playerId
+        - boostAmount
+        - totalBoost
+        - location
+        - trace_id
+      properties:
+        playerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        boostAmount:
+          type: integer
+          enum:
+            - 12
+            - 100
+          example: 12
+        totalBoost:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 80
+        location:
+          type: string
+          enum:
+            - mid
+            - upfield
+            - back
+          example: mid
+        trace_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
