@@ -1,0 +1,47 @@
+version: '3.3'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"  # Zookeeper default port
+    hostname: zookeeper
+    container_name: zookeeper  # Added for easier container identification
+
+  kafka:
+    image: wurstmeister/kafka
+    command: [start-kafka.sh]
+    ports:
+      - "9092:9092"  # Kafka default port for external access
+    hostname: kafka
+    container_name: kafka  # Added for easier container identification
+    environment:
+      KAFKA_CREATE_TOPICS: "events:1:1"  # Create topic: "events" with 1 partition and 1 replica
+      KAFKA_ADVERTISED_HOST_NAME: ec2-54-213-46-173.us-west-2.compute.amazonaws.com  # Replace with your VM's DNS name
+      KAFKA_LISTENERS: INSIDE://:29092,OUTSIDE://:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://ec2-54-213-46-173.us-west-2.compute.amazonaws.com:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Connect Kafka to Zookeeper service
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Kafka Docker-in-Docker for Kafka to use host Docker
+    depends_on:
+      - zookeeper  # Ensure Zookeeper starts before Kafka
+
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'events'  # Name of the database to create
+      MYSQL_USER: 'user'  # Custom MySQL user
+      MYSQL_PASSWORD: 'password'  # MySQL user password
+      MYSQL_ROOT_PASSWORD: 'password'  # Root password for MySQL
+    ports:
+      - '3306:3306'  # Expose MySQL on default port 3306
+    expose:
+      - '3306'  # Makes port 3306 accessible to other services within the Docker network
+    volumes:
+      - my-db:/var/lib/mysql  # Persist MySQL data using named volumes
+
+volumes:
+  my-db:  # Named volume for persistent MySQL storage
